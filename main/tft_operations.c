@@ -2299,13 +2299,13 @@ TickType_t MainScreen(TFT_t * dev, FontxFile *fx, uint16_t model, int width, int
     if(state==0)
     {
         ypos -= lineHeight;
-        snprintf((char *)ascii, sizeof(ascii), "Grzalki OFF");
+        snprintf((char *)ascii, sizeof(ascii), "Grzalki: OFF");
         lcdDrawString(dev, fx, 10, 3, ascii, color);
     }
     else
     {
         ypos -= lineHeight;
-        snprintf((char *)ascii, sizeof(ascii), "Grzalki ON");
+        snprintf((char *)ascii, sizeof(ascii), "Grzalki: ON");
         lcdDrawString(dev, fx, 10, 3, ascii, color);
     }
 

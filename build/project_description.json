@@ -1,7 +1,7 @@
 {
     "version":            "1",
     "project_name":       "ili9340",
-    "project_version":    "024511c-dirty",
+    "project_version":    "c3f2083-dirty",
     "project_path":       "/home/majorbien/eclipse-workspace/extreme_design_custom",
     "idf_path":           "/home/majorbien/Pobrane/esp-idf4/src/esp-idf-v4.4.7",
     "build_dir":          "/home/majorbien/eclipse-workspace/extreme_design_custom/build",

@@ -53,7 +53,7 @@ static const char *TAG = "MAIN";
 #define GPIO_PIN_5    5
 
 static esp_adc_cal_characteristics_t *adc_chars;
-static const adc_channel_t channel = ADC_CHANNEL_0;
+static const adc_channel_t channel = ADC_CHANNEL_6;
 static const adc_channel_t channel2 = ADC_CHANNEL_7;
 static const adc_atten_t atten = ADC_ATTEN_DB_0;        // Attenuation
 static const adc_unit_t unit = ADC_UNIT_1;              // ADC1
@@ -114,18 +114,11 @@ void Temperature(void *pvParameters)
         ESP_LOGI(TAG, "Channel 2 - Raw: %d\tVoltage: %dmV", adc_reading2, voltage2);
         //ESP_LOGI(TAG, "Raw: %d\tVoltage: %dmV", adc_reading, voltage);
 
-        temperature1 = scaleXnormX(adc_reading, 0, 4096, 0, 800);
+        temperature1 = scaleXnormX(adc_reading, 0, 4096, 150, 300);
         ESP_LOGI(TAG, "Temp1 %.1f", temperature1);
-        temperature2 = scaleXnormX(adc_reading2, 0, 4096, 0, 800);
+        temperature2 = scaleXnormX(adc_reading2, 0, 4096, 150, 300);
         ESP_LOGI(TAG, "Temp2 %.1f", temperature2);
 
-        if (temperature2 > temperature1) {
-        ESP_LOGI(TAG, "Setting GPIOs to HIGH");
-        set_gpio_pins(1); // Set GPIOs to high
-        } else {
-        ESP_LOGI(TAG, "Setting GPIOs to LOW");
-        set_gpio_pins(0); // Set GPIOs to low
-                }
         vTaskDelay(pdMS_TO_TICKS(200)); // Delay for 1 second
     }
 
@@ -338,7 +331,7 @@ esp_err_t mountSPIFFS(char * path, char * label, int max_files) {
 
 void app_main(void)
 {
-
+		/*
 	 	gpio_pad_select_gpio(GPIO_PIN_3);
 	    gpio_pad_select_gpio(GPIO_PIN_1);
 	    gpio_pad_select_gpio(GPIO_PIN_16);
@@ -352,7 +345,7 @@ void app_main(void)
 	    gpio_set_direction(GPIO_PIN_17, GPIO_MODE_OUTPUT);
 	    gpio_set_direction(GPIO_PIN_2, GPIO_MODE_OUTPUT);
 	    gpio_set_direction(GPIO_PIN_5, GPIO_MODE_OUTPUT);
-
+		 */
 
 
 	// Initialize NVS
@@ -383,7 +376,7 @@ void app_main(void)
 	listSPIFFS("/images/");
 
 	xTaskCreate(ILI9341, "ILI9341", 1024*6, NULL, 2, NULL);
-	xTaskCreate(Temperature, "Temperature", 1024*2, NULL, 2, NULL);
+	xTaskCreate(Temperature, "Temperature", 1024*2, NULL, 0, NULL);
 	 // Configure ADC
 	    if (unit == ADC_UNIT_1) {
 	        adc1_config_width(ADC_WIDTH_BIT_12);
