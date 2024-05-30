@@ -2243,7 +2243,7 @@ TickType_t ArrowInteractions(TFT_t * dev, FontxFile *fx, uint16_t model, int wid
 }
 
 
-TickType_t MainScreen(TFT_t * dev, FontxFile *fx, uint16_t model, int width, int height, double temp1, double temp2, double temp3, bool state) {
+TickType_t MainScreen(TFT_t * dev, FontxFile *fx, uint16_t model, int width, int height, double temp1, double temp2, double temp3, bool state, bool work) {
     TickType_t startTick, endTick, diffTick;
     startTick = xTaskGetTickCount();
 
@@ -2284,15 +2284,31 @@ TickType_t MainScreen(TFT_t * dev, FontxFile *fx, uint16_t model, int width, int
     int lineHeight = fontHeight + 2; // Wysokość linii z odstępem
     ypos = height - lineHeight;
 
-    snprintf((char *)ascii, sizeof(ascii), "Gorny prog: %.1f", temp1);
+
+
+    if(work==0)
+       {
+           ypos -= lineHeight;
+           snprintf((char *)ascii, sizeof(ascii), "System: OFF");
+           lcdDrawString(dev, fx, 90, 3, ascii, color);
+       }
+       else
+       {
+           ypos -= lineHeight;
+           snprintf((char *)ascii, sizeof(ascii), "System: ON");
+           lcdDrawString(dev, fx, 90, 3, ascii, color);
+       }
+
+
+    snprintf((char *)ascii, sizeof(ascii), "Gorny prog: %.0f", temp1);
     lcdDrawString(dev, fx, 70, 3, ascii, color);
 
     ypos -= lineHeight;
-    snprintf((char *)ascii, sizeof(ascii), "Dolny prog: %.1f", temp2);
+    snprintf((char *)ascii, sizeof(ascii), "Dolny prog: %.0f", temp2);
     lcdDrawString(dev, fx, 50, 3, ascii, color);
 
     ypos -= lineHeight;
-    snprintf((char *)ascii, sizeof(ascii), "Aktualna temp: %.1f", temp3);
+    snprintf((char *)ascii, sizeof(ascii), "Pomiar temp: %.1f", temp3);
     lcdDrawString(dev, fx, 30, 3, ascii, color);
 
 

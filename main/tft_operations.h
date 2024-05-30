@@ -59,7 +59,7 @@ TickType_t PNGshow(TFT_t * dev, char * file, int width, int height);
 void PNGshowPos(TFT_t * dev, char * file, int width, int height, int xpos, int ypos);
 TickType_t ArrowInteractions(TFT_t * dev, FontxFile *fx, uint16_t model, int width, int height, uint8_t arrow);
 TickType_t DisplayData(TFT_t *dev, FontxFile *fx, int width, int height, double altitude, double verticalVelocity);
-TickType_t MainScreen(TFT_t * dev, FontxFile *fx, uint16_t model, int width, int height, double temp1, double temp2, double temp3, bool state);
+TickType_t MainScreen(TFT_t * dev, FontxFile *fx, uint16_t model, int width, int height, double temp1, double temp2, double temp3, bool state, bool work);
 //TickType_t displaySettingsMenu(TFT_t *dev, FontxFile *fx, uint16_t model, int width, int height, double localPressureOffset, uint8_t unit);
 TickType_t Menu(TFT_t * dev, FontxFile *fx, uint16_t model, int width, int height, uint8_t arrow, double temp1, uint8_t temp2);
 #endif /* MAIN_TFT_OPERATIONS_H_ */

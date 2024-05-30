@@ -45,12 +45,13 @@ static const char *TAG = "MAIN";
 #define DEFAULT_VREF    1100        // Default reference voltage in mV
 #define NO_OF_SAMPLES   64          // Number of samples for averaging
 
-#define GPIO_PIN_3    3
-#define GPIO_PIN_1    1
-#define GPIO_PIN_16   16
-#define GPIO_PIN_17   17
-#define GPIO_PIN_2    2
-#define GPIO_PIN_5    5
+
+
+//temperature sensor
+#define PIN_NUM_MISO 21
+#define PIN_NUM_MOSI 22
+#define PIN_NUM_CLK  18
+#define PIN_NUM_CS   19
 
 static esp_adc_cal_characteristics_t *adc_chars;
 static const adc_channel_t channel = ADC_CHANNEL_6;
@@ -62,22 +63,91 @@ static const adc_unit_t unit = ADC_UNIT_1;              // ADC1
 
 float temperature1 = 0;
 float temperature2 = 0;
+float temperature_sensor = 0;
+bool heaters = 0;
+bool work = 0;
+
+double prev_temperature1 = 0.0;
+double prev_temperature2 = 0.0;
+double prev_temperature_sensor = 0.0;
+int prev_heaters = 0;
+int prev_system = 0;
+
+//temperature sensor functions
+void spi_init(spi_device_handle_t *spi) {
+    spi_bus_config_t buscfg = {
+        .miso_io_num = PIN_NUM_MISO,
+        .mosi_io_num = -1,
+        .sclk_io_num = PIN_NUM_CLK,
+        .quadwp_io_num = -1,
+        .quadhd_io_num = -1,
+        .max_transfer_sz = 4,
+    };
+
+    spi_device_interface_config_t devcfg = {
+        .clock_speed_hz = 1000000,
+        .mode = 0,
+        .spics_io_num = PIN_NUM_CS,
+        .queue_size = 1,
+    };
+
+
+    ESP_ERROR_CHECK(spi_bus_initialize(VSPI_HOST, &buscfg, 1));
+
+    ESP_ERROR_CHECK(spi_bus_add_device(VSPI_HOST, &devcfg, spi));
+}
+
+
+float max6675_read_temp(spi_device_handle_t spi) {
+    uint8_t rx_data[2];
+    spi_transaction_t t;
+    memset(&t, 0, sizeof(t));
+    t.length = 16;
+    t.rx_buffer = rx_data;
+
+    ESP_ERROR_CHECK(spi_device_transmit(spi, &t));
+
+
+    uint16_t value = (rx_data[0] << 8) | rx_data[1];
+
+
+    if (value & 0x4) {
+        ESP_LOGE(TAG, "Thermocouple input open");
+        return -1.0;
+    }
+
+
+    value >>= 3;
+    return value * 0.25;
+}
+
+
+
+
+
+
+
+
+
 uint32_t scaleXnormX(uint32_t x, uint32_t in_min, uint32_t in_max, double out_min, double out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-void set_gpio_pins(uint32_t level) {
-    gpio_set_level(GPIO_PIN_3, level);
-    gpio_set_level(GPIO_PIN_1, level);
-    gpio_set_level(GPIO_PIN_16, level);
-    gpio_set_level(GPIO_PIN_17, level);
-    gpio_set_level(GPIO_PIN_2, level);
-    gpio_set_level(GPIO_PIN_5, level);
+void set_gpio_pins(bool level) {
+    gpio_set_level(5, level);
+    gpio_set_level(17, level);
+    gpio_set_level(16, level);
+    gpio_set_level(4, level);
+    gpio_set_level(2, level);
+    gpio_set_level(16, level);
 }
 
 
 void Temperature(void *pvParameters)
 {
+
+	spi_device_handle_t spi;
+	spi_init(&spi);
     while (1) {
         uint32_t adc_reading = 0;
         uint32_t adc_reading2 = 0;
@@ -111,13 +181,18 @@ void Temperature(void *pvParameters)
         uint32_t voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
         uint32_t voltage2 = esp_adc_cal_raw_to_voltage(adc_reading2, adc_chars);
         //printf("Raw: %d\tVoltage: %dmV\n", adc_reading, voltage);
-        ESP_LOGI(TAG, "Channel 2 - Raw: %d\tVoltage: %dmV", adc_reading2, voltage2);
+        //ESP_LOGI(TAG, "Channel 2 - Raw: %d\tVoltage: %dmV", adc_reading2, voltage2);
         //ESP_LOGI(TAG, "Raw: %d\tVoltage: %dmV", adc_reading, voltage);
 
-        temperature1 = scaleXnormX(adc_reading, 0, 4096, 150, 300);
+        temperature1 = scaleXnormX(adc_reading, 0, 4096, 150, 200);
         ESP_LOGI(TAG, "Temp1 %.1f", temperature1);
-        temperature2 = scaleXnormX(adc_reading2, 0, 4096, 150, 300);
+        temperature2 = scaleXnormX(adc_reading2, 0, 4096, 150, 200);
         ESP_LOGI(TAG, "Temp2 %.1f", temperature2);
+
+        temperature_sensor = max6675_read_temp(spi);
+        if (temperature_sensor != -1.0) {
+           ESP_LOGI(TAG, "Current Temperature: %.2f°C", temperature_sensor);
+        }
 
         vTaskDelay(pdMS_TO_TICKS(200)); // Delay for 1 second
     }
@@ -245,26 +320,58 @@ void ILI9341(void *pvParameters)
 #endif
 
 #endif
-			/*
-			FillRectTest(&dev, CONFIG_WIDTH, CONFIG_HEIGHT);
-			WAIT;
-
-			ColorTest(&dev, CONFIG_WIDTH, CONFIG_HEIGHT);
-			WAIT;
-
-			CodeTest(&dev, fx32G, CONFIG_WIDTH, CONFIG_HEIGHT, 0x00, 0x7f);
-			WAIT;
-
-			CodeTest(&dev, fx32G, CONFIG_WIDTH, CONFIG_HEIGHT, 0x80, 0xff);
-			WAIT;
-
-			CodeTest(&dev, fx32L, CONFIG_WIDTH, CONFIG_HEIGHT, 0x80, 0xff);
-			WAIT;
-			*/
 
 
-		MainScreen(&dev, fx16G, model, CONFIG_WIDTH, CONFIG_HEIGHT, 23.1, 27.1, 28.1,0);
+
+			if(temperature1==150&&temperature2==150)
+			{
+			    set_gpio_pins(0);
+			    heaters = 0;
+			    work = 0;
+			}
+			else
+			{
+				work = 1;
+				if (temperature_sensor < temperature1) {
+				    set_gpio_pins(1);
+				    heaters = 1;
+				} else if (temperature_sensor > temperature2) {
+				    set_gpio_pins(0);
+				    heaters = 0;
+				}
+				else if(temperature1==150&&temperature2==150)
+				{
+					set_gpio_pins(0);
+					heaters = 0;
+				}
+			}
+
+
+
+
+/*
+		MainScreen(&dev, fx16G, model, CONFIG_WIDTH, CONFIG_HEIGHT, temperature1, temperature2, temperature_sensor,heaters);
 		vTaskDelay(pdMS_TO_TICKS(2000)); // Delay for 1 second
+		*/
+
+
+    if (temperature1 != prev_temperature1 ||
+        temperature2 != prev_temperature2 ||
+        fabs(temperature_sensor - prev_temperature_sensor) > 1.0 ||
+        heaters != prev_heaters || system != prev_system)  {
+
+
+    MainScreen(&dev, fx16G, model, CONFIG_WIDTH, CONFIG_HEIGHT, temperature1, temperature2, temperature_sensor, heaters,work);
+
+
+    prev_temperature1 = temperature1;
+    prev_temperature2 = temperature2;
+    prev_temperature_sensor = temperature_sensor;
+    prev_heaters = heaters;
+    prev_system = system;
+}
+    vTaskDelay(pdMS_TO_TICKS(100));
+
 	} // end while
 
 	// never reach here
@@ -331,21 +438,21 @@ esp_err_t mountSPIFFS(char * path, char * label, int max_files) {
 
 void app_main(void)
 {
-		/*
-	 	gpio_pad_select_gpio(GPIO_PIN_3);
-	    gpio_pad_select_gpio(GPIO_PIN_1);
-	    gpio_pad_select_gpio(GPIO_PIN_16);
-	    gpio_pad_select_gpio(GPIO_PIN_17);
-	    gpio_pad_select_gpio(GPIO_PIN_2);
-	    gpio_pad_select_gpio(GPIO_PIN_5);
 
-	    gpio_set_direction(GPIO_PIN_3, GPIO_MODE_OUTPUT);
-	    gpio_set_direction(GPIO_PIN_1, GPIO_MODE_OUTPUT);
-	    gpio_set_direction(GPIO_PIN_16, GPIO_MODE_OUTPUT);
-	    gpio_set_direction(GPIO_PIN_17, GPIO_MODE_OUTPUT);
-	    gpio_set_direction(GPIO_PIN_2, GPIO_MODE_OUTPUT);
-	    gpio_set_direction(GPIO_PIN_5, GPIO_MODE_OUTPUT);
-		 */
+	 	gpio_pad_select_gpio(5);
+	    gpio_pad_select_gpio(17);
+	    gpio_pad_select_gpio(16);
+	    gpio_pad_select_gpio(4);
+	    gpio_pad_select_gpio(2);
+	    gpio_pad_select_gpio(15);
+
+	    gpio_set_direction(5, GPIO_MODE_OUTPUT);
+	    gpio_set_direction(17, GPIO_MODE_OUTPUT);
+	    gpio_set_direction(16, GPIO_MODE_OUTPUT);
+	    gpio_set_direction(4, GPIO_MODE_OUTPUT);
+	    gpio_set_direction(2, GPIO_MODE_OUTPUT);
+	    gpio_set_direction(15, GPIO_MODE_OUTPUT);
+
 
 
 	// Initialize NVS
@@ -395,6 +502,8 @@ void app_main(void)
 	    // Characterize ADC
 	    adc_chars = calloc(1, sizeof(esp_adc_cal_characteristics_t));
 	    esp_adc_cal_characterize(unit, atten, ADC_WIDTH_BIT_12, DEFAULT_VREF, adc_chars);
+	    //configure temperature sensor
+
 
 
 }

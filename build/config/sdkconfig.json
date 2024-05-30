@@ -671,7 +671,7 @@
     "NEWLIB_STDOUT_LINE_ENDING_LF": false,
     "NVS_ASSERT_ERROR_CHECK": false,
     "OFFSETX": 2,
-    "OFFSETY": 2,
+    "OFFSETY": 1,
     "OPENSSL_ASSERT_DO_NOTHING": false,
     "OPENSSL_ASSERT_EXIT": true,
     "OPENSSL_DEBUG": false,
