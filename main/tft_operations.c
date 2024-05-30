@@ -2243,71 +2243,78 @@ TickType_t ArrowInteractions(TFT_t * dev, FontxFile *fx, uint16_t model, int wid
 }
 
 
-TickType_t ArrowInteractions2(TFT_t * dev, FontxFile *fx, uint16_t model, int width, int height, uint8_t arrow, double temp1, double temp2) {
-	   TickType_t startTick, endTick, diffTick;
-	    startTick = xTaskGetTickCount();
+TickType_t MainScreen(TFT_t * dev, FontxFile *fx, uint16_t model, int width, int height, double temp1, double temp2, double temp3, bool state) {
+    TickType_t startTick, endTick, diffTick;
+    startTick = xTaskGetTickCount();
 
-	    // Pobierz szerokość i wysokość czcionki
-	    uint8_t buffer[FontxGlyphBufSize];
-	    uint8_t fontWidth;
-	    uint8_t fontHeight;
-	    GetFontx(fx, 0, buffer, &fontWidth, &fontHeight);
+    // Pobierz szerokość i wysokość czcionki
+    uint8_t buffer[FontxGlyphBufSize];
+    uint8_t fontWidth;
+    uint8_t fontHeight;
+    GetFontx(fx, 0, buffer, &fontWidth, &fontHeight);
 
-	    // Ustawienie orientacji czcionki
-	    uint16_t xpos;
-	    uint16_t ypos;
-	    int	stlen;
-	    uint8_t ascii[30]; // Zwiększono rozmiar bufora na potrzeby dłuższych łańcuchów
-	    uint16_t color;
+    // Ustawienie orientacji czcionki
+    uint16_t xpos;
+    uint16_t ypos;
+    int stlen;
+    uint8_t ascii[30]; // Zwiększono rozmiar bufora na potrzeby dłuższych łańcuchów
+    uint16_t color;
 
-	    // Wypełnienie ekranu na czarno
-	    lcdFillScreen(dev, BLACK);
+    // Wypełnienie ekranu na czarno
+    lcdFillScreen(dev, BLACK);
 
-	    // Wyświetlenie nazwy aplikacji
-	    strcpy((char *)ascii, "Extreme Design Custom");
-	    if (width < height) {
-	        xpos = ((width - fontHeight) / 2) - 1;
-	        ypos = (height - (strlen((char *)ascii) * fontWidth)) / 2;
-	        lcdSetFontDirection(dev, DIRECTION90);
-	    } else {
-	        ypos = ((height - fontHeight) / 2) - 1;
-	        xpos = (width - (strlen((char *)ascii) * fontWidth)) / 2;
-	        lcdSetFontDirection(dev, DIRECTION0);
-	    }
-	    color = WHITE;
-	    lcdDrawString(dev, fx, xpos, 30, ascii, color);
-/*
-	    // Wyświetlenie strzałek
-	    lcdSetFontDirection(dev, DIRECTION0);
-	    if(arrow == 0) {
-	        color = GREEN;
-	        lcdDrawFillArrow(dev, 15, 10, 0, 0, 5, color);
-	        strcpy((char *)ascii, "CHM");
-	        lcdDrawString(dev, fx, 0, 40, ascii, color);
-	    }
+    // Wyświetlenie nazwy aplikacji
+    strcpy((char *)ascii, "Extreme Design");
+    if (width < height) {
+        xpos = (width - fontHeight) / 2;
+        ypos = (height - (strlen((char *)ascii) * fontWidth)) / 2;
+        lcdSetFontDirection(dev, DIRECTION90);
+    } else {
+        ypos = (height - fontHeight) / 2;
+        xpos = (width - (strlen((char *)ascii) * fontWidth)) / 2;
+        lcdSetFontDirection(dev, DIRECTION0);
+    }
+    color = WHITE;
+    lcdDrawString(dev, fx, 110, ypos, ascii, color);
 
-	    if(arrow == 1) {
-	        color = GREEN;
-	        lcdDrawFillArrow(dev, width-14, 10, width-1, 0, 5, color);
-	        sprintf((char *)ascii, "CHM");
-	        stlen = strlen((char *)ascii);
-	        xpos = (width-1) - (fontWidth*stlen);
-	        lcdDrawString(dev, fx, xpos, 40, ascii, color);
-	    }
-*/
-	    // Wyświetlenie danych o wysokości i prędkości pionowej
-	    color = WHITE;
-	    snprintf((char *)ascii, sizeof(ascii), "Temperatura zadana: %.2f", temp1); // Usunięto " meters"
-	    lcdDrawString(dev, fx, 0, height-40, ascii, color);
+    // Wyświetlenie danych o temperaturze
+    color = WHITE;
 
-	    snprintf((char *)ascii, sizeof(ascii), "Temepratura aktualna: %.2f", temp2); // Usunięto " m/s"
-	    lcdDrawString(dev, fx, 0, height-20, ascii, color);
+    // Ustawienie pozycji wyświetlania tekstu
+    int lineHeight = fontHeight + 2; // Wysokość linii z odstępem
+    ypos = height - lineHeight;
 
-	    // Zakończenie pomiaru czasu i zwrócenie wyniku
-	    endTick = xTaskGetTickCount();
-	    diffTick = endTick - startTick;
-	    ESP_LOGI(__FUNCTION__, "elapsed time[ms]:%"PRIu32,diffTick*portTICK_PERIOD_MS);
-	    return diffTick;
+    snprintf((char *)ascii, sizeof(ascii), "Gorny prog: %.1f", temp1);
+    lcdDrawString(dev, fx, 70, 3, ascii, color);
+
+    ypos -= lineHeight;
+    snprintf((char *)ascii, sizeof(ascii), "Dolny prog: %.1f", temp2);
+    lcdDrawString(dev, fx, 50, 3, ascii, color);
+
+    ypos -= lineHeight;
+    snprintf((char *)ascii, sizeof(ascii), "Aktualna temp: %.1f", temp3);
+    lcdDrawString(dev, fx, 30, 3, ascii, color);
+
+
+    if(state==0)
+    {
+        ypos -= lineHeight;
+        snprintf((char *)ascii, sizeof(ascii), "Grzalki OFF");
+        lcdDrawString(dev, fx, 10, 3, ascii, color);
+    }
+    else
+    {
+        ypos -= lineHeight;
+        snprintf((char *)ascii, sizeof(ascii), "Grzalki ON");
+        lcdDrawString(dev, fx, 10, 3, ascii, color);
+    }
+
+
+    // Zakończenie pomiaru czasu i zwrócenie wyniku
+    endTick = xTaskGetTickCount();
+    diffTick = endTick - startTick;
+    ESP_LOGI(__FUNCTION__, "elapsed time[ms]:%"PRIu32, diffTick * portTICK_PERIOD_MS);
+    return diffTick;
 }
 
 

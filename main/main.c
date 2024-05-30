@@ -60,8 +60,8 @@ static const adc_unit_t unit = ADC_UNIT_1;              // ADC1
 
 
 
-float temperature = 0;
-float temperature_sensor = 0;
+float temperature1 = 0;
+float temperature2 = 0;
 uint32_t scaleXnormX(uint32_t x, uint32_t in_min, uint32_t in_max, double out_min, double out_max) {
   return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
@@ -76,7 +76,7 @@ void set_gpio_pins(uint32_t level) {
 }
 
 
-void ADC0(void *pvParameters)
+void Temperature(void *pvParameters)
 {
     while (1) {
         uint32_t adc_reading = 0;
@@ -114,12 +114,12 @@ void ADC0(void *pvParameters)
         ESP_LOGI(TAG, "Channel 2 - Raw: %d\tVoltage: %dmV", adc_reading2, voltage2);
         //ESP_LOGI(TAG, "Raw: %d\tVoltage: %dmV", adc_reading, voltage);
 
-        temperature = scaleXnormX(adc_reading, 0, 4096, 0, 800);
-        ESP_LOGI(TAG, "Temperatura %.2f", temperature);
-        temperature_sensor = scaleXnormX(adc_reading2, 0, 4096, 0, 800);
-        ESP_LOGI(TAG, "Temperatura %.2f", temperature_sensor);
+        temperature1 = scaleXnormX(adc_reading, 0, 4096, 0, 800);
+        ESP_LOGI(TAG, "Temp1 %.1f", temperature1);
+        temperature2 = scaleXnormX(adc_reading2, 0, 4096, 0, 800);
+        ESP_LOGI(TAG, "Temp2 %.1f", temperature2);
 
-        if (temperature_sensor > temperature) {
+        if (temperature2 > temperature1) {
         ESP_LOGI(TAG, "Setting GPIOs to HIGH");
         set_gpio_pins(1); // Set GPIOs to high
         } else {
@@ -252,7 +252,7 @@ void ILI9341(void *pvParameters)
 #endif
 
 #endif
-
+			/*
 			FillRectTest(&dev, CONFIG_WIDTH, CONFIG_HEIGHT);
 			WAIT;
 
@@ -267,7 +267,11 @@ void ILI9341(void *pvParameters)
 
 			CodeTest(&dev, fx32L, CONFIG_WIDTH, CONFIG_HEIGHT, 0x80, 0xff);
 			WAIT;
+			*/
 
+
+		MainScreen(&dev, fx16G, model, CONFIG_WIDTH, CONFIG_HEIGHT, 23.1, 27.1, 28.1,0);
+		vTaskDelay(pdMS_TO_TICKS(2000)); // Delay for 1 second
 	} // end while
 
 	// never reach here
@@ -379,7 +383,7 @@ void app_main(void)
 	listSPIFFS("/images/");
 
 	xTaskCreate(ILI9341, "ILI9341", 1024*6, NULL, 2, NULL);
-	//xTaskCreate(ADC0, "ADC0", 1024*2, NULL, 2, NULL);
+	xTaskCreate(Temperature, "Temperature", 1024*2, NULL, 2, NULL);
 	 // Configure ADC
 	    if (unit == ADC_UNIT_1) {
 	        adc1_config_width(ADC_WIDTH_BIT_12);
