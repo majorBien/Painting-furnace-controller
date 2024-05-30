@@ -322,6 +322,10 @@ void ILI9341(void *pvParameters)
 #endif
 
 
+			char file[32];
+			//strcpy(file, "/images/logo.png");
+			//PNGTest(&dev, file, CONFIG_WIDTH, CONFIG_HEIGHT);
+			//WAIT;
 
 			if(temperature1==150&&temperature2==150)
 			{
@@ -358,7 +362,7 @@ void ILI9341(void *pvParameters)
     if (temperature1 != prev_temperature1 ||
         temperature2 != prev_temperature2 ||
         fabs(temperature_sensor - prev_temperature_sensor) > 1.0 ||
-        heaters != prev_heaters || system != prev_system)  {
+        heaters != prev_heaters || work != prev_system)  {
 
 
     MainScreen(&dev, fx16G, model, CONFIG_WIDTH, CONFIG_HEIGHT, temperature1, temperature2, temperature_sensor, heaters,work);
@@ -368,7 +372,7 @@ void ILI9341(void *pvParameters)
     prev_temperature2 = temperature2;
     prev_temperature_sensor = temperature_sensor;
     prev_heaters = heaters;
-    prev_system = system;
+    prev_system = work;
 }
     vTaskDelay(pdMS_TO_TICKS(100));
 
