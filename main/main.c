@@ -21,6 +21,11 @@
 
 #include "driver/gpio.h"
 #include "tft_operations.h"
+
+#include "driver/adc.h"
+#include "esp_adc_cal.h"
+#include "driver/gpio.h"
+
 #define INTERVAL 400
 #define WAIT vTaskDelay(INTERVAL)
 
@@ -35,6 +40,104 @@ static const char *TAG = "MAIN";
 #define CONFIG_RESET_GPIO 2
 #define CONFIG_BL_GPIO 2
 #endif
+
+
+#define DEFAULT_VREF    1100        // Default reference voltage in mV
+#define NO_OF_SAMPLES   64          // Number of samples for averaging
+
+#define GPIO_PIN_3    3
+#define GPIO_PIN_1    1
+#define GPIO_PIN_16   16
+#define GPIO_PIN_17   17
+#define GPIO_PIN_2    2
+#define GPIO_PIN_5    5
+
+static esp_adc_cal_characteristics_t *adc_chars;
+static const adc_channel_t channel = ADC_CHANNEL_0;
+static const adc_channel_t channel2 = ADC_CHANNEL_7;
+static const adc_atten_t atten = ADC_ATTEN_DB_0;        // Attenuation
+static const adc_unit_t unit = ADC_UNIT_1;              // ADC1
+
+
+
+float temperature = 0;
+float temperature_sensor = 0;
+uint32_t scaleXnormX(uint32_t x, uint32_t in_min, uint32_t in_max, double out_min, double out_max) {
+  return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
+
+void set_gpio_pins(uint32_t level) {
+    gpio_set_level(GPIO_PIN_3, level);
+    gpio_set_level(GPIO_PIN_1, level);
+    gpio_set_level(GPIO_PIN_16, level);
+    gpio_set_level(GPIO_PIN_17, level);
+    gpio_set_level(GPIO_PIN_2, level);
+    gpio_set_level(GPIO_PIN_5, level);
+}
+
+
+void ADC0(void *pvParameters)
+{
+    while (1) {
+        uint32_t adc_reading = 0;
+        uint32_t adc_reading2 = 0;
+
+        // Multisampling
+        for (int i = 0; i < NO_OF_SAMPLES; i++) {
+            if (unit == ADC_UNIT_1) {
+                adc_reading += adc1_get_raw((adc1_channel_t)channel);
+            } else {
+                int raw;
+                adc2_get_raw((adc2_channel_t)channel, ADC_WIDTH_BIT_12, &raw);
+                adc_reading += raw;
+            }
+        }
+        adc_reading /= NO_OF_SAMPLES;
+
+        // Multisampling for channel 2
+               for (int i = 0; i < NO_OF_SAMPLES; i++) {
+                   if (unit == ADC_UNIT_1) {
+                       adc_reading2 += adc1_get_raw((adc1_channel_t)channel2);
+                   } else {
+                       int raw;
+                       adc2_get_raw((adc2_channel_t)channel2, ADC_WIDTH_BIT_12, &raw);
+                       adc_reading2 += raw;
+                   }
+               }
+               adc_reading2 /= NO_OF_SAMPLES;
+
+
+        // Convert adc_reading to voltage in mV
+        uint32_t voltage = esp_adc_cal_raw_to_voltage(adc_reading, adc_chars);
+        uint32_t voltage2 = esp_adc_cal_raw_to_voltage(adc_reading2, adc_chars);
+        //printf("Raw: %d\tVoltage: %dmV\n", adc_reading, voltage);
+        ESP_LOGI(TAG, "Channel 2 - Raw: %d\tVoltage: %dmV", adc_reading2, voltage2);
+        //ESP_LOGI(TAG, "Raw: %d\tVoltage: %dmV", adc_reading, voltage);
+
+        temperature = scaleXnormX(adc_reading, 0, 4096, 0, 800);
+        ESP_LOGI(TAG, "Temperatura %.2f", temperature);
+        temperature_sensor = scaleXnormX(adc_reading2, 0, 4096, 0, 800);
+        ESP_LOGI(TAG, "Temperatura %.2f", temperature_sensor);
+
+        if (temperature_sensor > temperature) {
+        ESP_LOGI(TAG, "Setting GPIOs to HIGH");
+        set_gpio_pins(1); // Set GPIOs to high
+        } else {
+        ESP_LOGI(TAG, "Setting GPIOs to LOW");
+        set_gpio_pins(0); // Set GPIOs to low
+                }
+        vTaskDelay(pdMS_TO_TICKS(200)); // Delay for 1 second
+    }
+
+
+
+
+}
+
+
+
+
+
 
 
 void ILI9341(void *pvParameters)
@@ -150,144 +253,20 @@ void ILI9341(void *pvParameters)
 
 #endif
 
-		FillTest(&dev, CONFIG_WIDTH, CONFIG_HEIGHT);
-		WAIT;
+			FillRectTest(&dev, CONFIG_WIDTH, CONFIG_HEIGHT);
+			WAIT;
 
-		ColorBarTest(&dev, CONFIG_WIDTH, CONFIG_HEIGHT);
-		WAIT;
+			ColorTest(&dev, CONFIG_WIDTH, CONFIG_HEIGHT);
+			WAIT;
 
-		ArrowTest(&dev, fx16G, model, CONFIG_WIDTH, CONFIG_HEIGHT);
-		WAIT;
+			CodeTest(&dev, fx32G, CONFIG_WIDTH, CONFIG_HEIGHT, 0x00, 0x7f);
+			WAIT;
 
-		LineTest(&dev, CONFIG_WIDTH, CONFIG_HEIGHT);
-		WAIT;
+			CodeTest(&dev, fx32G, CONFIG_WIDTH, CONFIG_HEIGHT, 0x80, 0xff);
+			WAIT;
 
-		CircleTest(&dev, CONFIG_WIDTH, CONFIG_HEIGHT);
-		WAIT;
-
-		RoundRectTest(&dev, CONFIG_WIDTH, CONFIG_HEIGHT);
-		WAIT;
-
-		RectAngleTest(&dev, CONFIG_WIDTH, CONFIG_HEIGHT);
-		WAIT;
-
-		TriangleTest(&dev, CONFIG_WIDTH, CONFIG_HEIGHT);
-		WAIT;
-
-		if (CONFIG_WIDTH >= 240) {
-			DirectionTest(&dev, fx24G, CONFIG_WIDTH, CONFIG_HEIGHT);
-		} else {
-			DirectionTest(&dev, fx16G, CONFIG_WIDTH, CONFIG_HEIGHT);
-		}
-		WAIT;
-
-		if (CONFIG_WIDTH >= 240) {
-			HorizontalTest(&dev, fx24G, CONFIG_WIDTH, CONFIG_HEIGHT);
-		} else {
-			HorizontalTest(&dev, fx16G, CONFIG_WIDTH, CONFIG_HEIGHT);
-		}
-		WAIT;
-
-		if (CONFIG_WIDTH >= 240) {
-			VerticalTest(&dev, fx24G, CONFIG_WIDTH, CONFIG_HEIGHT);
-		} else {
-			VerticalTest(&dev, fx16G, CONFIG_WIDTH, CONFIG_HEIGHT);
-		}
-		WAIT;
-
-		FillRectTest(&dev, CONFIG_WIDTH, CONFIG_HEIGHT);
-		WAIT;
-
-		ColorTest(&dev, CONFIG_WIDTH, CONFIG_HEIGHT);
-		WAIT;
-
-		CodeTest(&dev, fx32G, CONFIG_WIDTH, CONFIG_HEIGHT, 0x00, 0x7f);
-		WAIT;
-
-		CodeTest(&dev, fx32G, CONFIG_WIDTH, CONFIG_HEIGHT, 0x80, 0xff);
-		WAIT;
-
-		CodeTest(&dev, fx32L, CONFIG_WIDTH, CONFIG_HEIGHT, 0x80, 0xff);
-		WAIT;
-
-		char file[32];
-		if (CONFIG_WIDTH >= CONFIG_HEIGHT) {
-			strcpy(file, "/images/esp32.bmp");
-		} else {
-			strcpy(file, "/images/esp32_ro.bmp");
-		}
-		BMPTest(&dev, file, CONFIG_WIDTH, CONFIG_HEIGHT);
-		WAIT;
-
-#ifdef ENABLE_JPG
-		strcpy(file, "/images/esp32.jpeg");
-		JPEGTest(&dev, file, CONFIG_WIDTH, CONFIG_HEIGHT);
-		WAIT;
-#endif
-
-#ifdef ENABLE_PNG
-		strcpy(file, "/images/esp_logo.png");
-		PNGTest(&dev, file, CONFIG_WIDTH, CONFIG_HEIGHT);
-		WAIT;
-#endif
-
-		ScrollTest(&dev, fx16G, CONFIG_WIDTH, CONFIG_HEIGHT);
-		WAIT;
-		ScrollReset(&dev, CONFIG_WIDTH, CONFIG_HEIGHT);
-
-		// Multi Font Test
-		uint16_t color;
-		uint8_t ascii[40];
-		uint16_t margin = 10;
-		lcdFillScreen(&dev, BLACK);
-		color = WHITE;
-		lcdSetFontDirection(&dev, DIRECTION0);
-		uint16_t xpos = 0;
-		uint16_t ypos = 15;
-		int xd = 0;
-		int yd = 1;
-		if(CONFIG_WIDTH < CONFIG_HEIGHT) {
-			lcdSetFontDirection(&dev, DIRECTION90);
-			xpos = (CONFIG_WIDTH-1)-16;
-			ypos = 0;
-			xd = 1;
-			yd = 0;
-		}
-		strcpy((char *)ascii, "16Dot Gothic Font");
-		lcdDrawString(&dev, fx16G, xpos, ypos, ascii, color);
-
-		xpos = xpos - (24 * xd) - (margin * xd);
-		ypos = ypos + (16 * yd) + (margin * yd);
-		strcpy((char *)ascii, "24Dot Gothic Font");
-		lcdDrawString(&dev, fx24G, xpos, ypos, ascii, color);
-
-		xpos = xpos - (32 * xd) - (margin * xd);
-		ypos = ypos + (24 * yd) + (margin * yd);
-		if (CONFIG_WIDTH >= 240) {
-			strcpy((char *)ascii, "32Dot Gothic Font");
-			lcdDrawString(&dev, fx32G, xpos, ypos, ascii, color);
-			xpos = xpos - (32 * xd) - (margin * xd);
-			ypos = ypos + (32 * yd) + (margin * yd);
-		}
-
-		xpos = xpos - (10 * xd) - (margin * xd);
-		ypos = ypos + (10 * yd) + (margin * yd);
-		strcpy((char *)ascii, "16Dot Mincyo Font");
-		lcdDrawString(&dev, fx16M, xpos, ypos, ascii, color);
-
-		xpos = xpos - (24 * xd) - (margin * xd);
-		ypos = ypos + (16 * yd) + (margin * yd);
-		strcpy((char *)ascii, "24Dot Mincyo Font");
-		lcdDrawString(&dev, fx24M, xpos, ypos, ascii, color);
-
-		if (CONFIG_WIDTH >= 240) {
-			xpos = xpos - (32 * xd) - (margin * xd);
-			ypos = ypos + (24 * yd) + (margin * yd);
-			strcpy((char *)ascii, "32Dot Mincyo Font");
-			lcdDrawString(&dev, fx32M, xpos, ypos, ascii, color);
-		}
-		lcdSetFontDirection(&dev, DIRECTION0);
-		WAIT;
+			CodeTest(&dev, fx32L, CONFIG_WIDTH, CONFIG_HEIGHT, 0x80, 0xff);
+			WAIT;
 
 	} // end while
 
@@ -355,6 +334,23 @@ esp_err_t mountSPIFFS(char * path, char * label, int max_files) {
 
 void app_main(void)
 {
+
+	 	gpio_pad_select_gpio(GPIO_PIN_3);
+	    gpio_pad_select_gpio(GPIO_PIN_1);
+	    gpio_pad_select_gpio(GPIO_PIN_16);
+	    gpio_pad_select_gpio(GPIO_PIN_17);
+	    gpio_pad_select_gpio(GPIO_PIN_2);
+	    gpio_pad_select_gpio(GPIO_PIN_5);
+
+	    gpio_set_direction(GPIO_PIN_3, GPIO_MODE_OUTPUT);
+	    gpio_set_direction(GPIO_PIN_1, GPIO_MODE_OUTPUT);
+	    gpio_set_direction(GPIO_PIN_16, GPIO_MODE_OUTPUT);
+	    gpio_set_direction(GPIO_PIN_17, GPIO_MODE_OUTPUT);
+	    gpio_set_direction(GPIO_PIN_2, GPIO_MODE_OUTPUT);
+	    gpio_set_direction(GPIO_PIN_5, GPIO_MODE_OUTPUT);
+
+
+
 	// Initialize NVS
 	ESP_LOGI(TAG, "Initialize NVS");
 	esp_err_t err = nvs_flash_init();
@@ -383,4 +379,25 @@ void app_main(void)
 	listSPIFFS("/images/");
 
 	xTaskCreate(ILI9341, "ILI9341", 1024*6, NULL, 2, NULL);
+	//xTaskCreate(ADC0, "ADC0", 1024*2, NULL, 2, NULL);
+	 // Configure ADC
+	    if (unit == ADC_UNIT_1) {
+	        adc1_config_width(ADC_WIDTH_BIT_12);
+	        adc1_config_channel_atten(channel, atten);
+	    } else {
+	        adc2_config_channel_atten((adc2_channel_t)channel, atten);
+	    }
+
+	    // Configure ADC for channel 2
+	     if (unit == ADC_UNIT_1) {
+	         adc1_config_channel_atten(channel2, atten);
+	     } else {
+	         adc2_config_channel_atten((adc2_channel_t)channel2, atten);
+	     }
+
+	    // Characterize ADC
+	    adc_chars = calloc(1, sizeof(esp_adc_cal_characteristics_t));
+	    esp_adc_cal_characterize(unit, atten, ADC_WIDTH_BIT_12, DEFAULT_VREF, adc_chars);
+
+
 }

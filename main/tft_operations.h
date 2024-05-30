@@ -61,5 +61,5 @@ TickType_t ArrowInteractions(TFT_t * dev, FontxFile *fx, uint16_t model, int wid
 TickType_t DisplayData(TFT_t *dev, FontxFile *fx, int width, int height, double altitude, double verticalVelocity);
 TickType_t ArrowInteractions2(TFT_t * dev, FontxFile *fx, uint16_t model, int width, int height, uint8_t arrow, double altitude, double verticalVelocity);
 //TickType_t displaySettingsMenu(TFT_t *dev, FontxFile *fx, uint16_t model, int width, int height, double localPressureOffset, uint8_t unit);
-TickType_t Menu(TFT_t * dev, FontxFile *fx, uint16_t model, int width, int height, uint8_t arrow, double localPressureOffset, uint8_t unit);
+TickType_t Menu(TFT_t * dev, FontxFile *fx, uint16_t model, int width, int height, uint8_t arrow, double temp1, uint8_t temp2);
 #endif /* MAIN_TFT_OPERATIONS_H_ */

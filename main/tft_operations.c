@@ -2243,7 +2243,7 @@ TickType_t ArrowInteractions(TFT_t * dev, FontxFile *fx, uint16_t model, int wid
 }
 
 
-TickType_t ArrowInteractions2(TFT_t * dev, FontxFile *fx, uint16_t model, int width, int height, uint8_t arrow, double altitude, double verticalVelocity) {
+TickType_t ArrowInteractions2(TFT_t * dev, FontxFile *fx, uint16_t model, int width, int height, uint8_t arrow, double temp1, double temp2) {
 	   TickType_t startTick, endTick, diffTick;
 	    startTick = xTaskGetTickCount();
 
@@ -2264,7 +2264,7 @@ TickType_t ArrowInteractions2(TFT_t * dev, FontxFile *fx, uint16_t model, int wi
 	    lcdFillScreen(dev, BLACK);
 
 	    // Wyświetlenie nazwy aplikacji
-	    strcpy((char *)ascii, "Thermal Assistant");
+	    strcpy((char *)ascii, "Extreme Design Custom");
 	    if (width < height) {
 	        xpos = ((width - fontHeight) / 2) - 1;
 	        ypos = (height - (strlen((char *)ascii) * fontWidth)) / 2;
@@ -2276,7 +2276,7 @@ TickType_t ArrowInteractions2(TFT_t * dev, FontxFile *fx, uint16_t model, int wi
 	    }
 	    color = WHITE;
 	    lcdDrawString(dev, fx, xpos, 30, ascii, color);
-
+/*
 	    // Wyświetlenie strzałek
 	    lcdSetFontDirection(dev, DIRECTION0);
 	    if(arrow == 0) {
@@ -2294,13 +2294,13 @@ TickType_t ArrowInteractions2(TFT_t * dev, FontxFile *fx, uint16_t model, int wi
 	        xpos = (width-1) - (fontWidth*stlen);
 	        lcdDrawString(dev, fx, xpos, 40, ascii, color);
 	    }
-
+*/
 	    // Wyświetlenie danych o wysokości i prędkości pionowej
 	    color = WHITE;
-	    snprintf((char *)ascii, sizeof(ascii), "Altitude: %.2f", altitude); // Usunięto " meters"
+	    snprintf((char *)ascii, sizeof(ascii), "Temperatura zadana: %.2f", temp1); // Usunięto " meters"
 	    lcdDrawString(dev, fx, 0, height-40, ascii, color);
 
-	    snprintf((char *)ascii, sizeof(ascii), "Vertical Velocity: %.2f", verticalVelocity); // Usunięto " m/s"
+	    snprintf((char *)ascii, sizeof(ascii), "Temepratura aktualna: %.2f", temp2); // Usunięto " m/s"
 	    lcdDrawString(dev, fx, 0, height-20, ascii, color);
 
 	    // Zakończenie pomiaru czasu i zwrócenie wyniku
