@@ -4,7 +4,7 @@
 cmake_minimum_required(VERSION 3.5)
 
 file(MAKE_DIRECTORY
-  "/home/majorbien/Pobrane/esp-idf4/src/esp-idf-v4.4.7/components/bootloader/subproject"
+  "/opt/esp-idf/components/bootloader/subproject"
   "/home/majorbien/eclipse-workspace/extreme_design_custom/build/bootloader"
   "/home/majorbien/eclipse-workspace/extreme_design_custom/build/bootloader-prefix"
   "/home/majorbien/eclipse-workspace/extreme_design_custom/build/bootloader-prefix/tmp"
@@ -17,3 +17,6 @@ set(configSubDirs )
 foreach(subDir IN LISTS configSubDirs)
     file(MAKE_DIRECTORY "/home/majorbien/eclipse-workspace/extreme_design_custom/build/bootloader-prefix/src/bootloader-stamp/${subDir}")
 endforeach()
+if(cfgdir)
+  file(MAKE_DIRECTORY "/home/majorbien/eclipse-workspace/extreme_design_custom/build/bootloader-prefix/src/bootloader-stamp${cfgdir}") # cfgdir has leading slash
+endif()

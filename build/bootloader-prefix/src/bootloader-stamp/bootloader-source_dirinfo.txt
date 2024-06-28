@@ -4,6 +4,6 @@
 
 method=source_dir
 command=
-source_dir=/home/majorbien/Pobrane/esp-idf4/src/esp-idf-v4.4.7/components/bootloader/subproject
+source_dir=/opt/esp-idf/components/bootloader/subproject
 work_dir=
 

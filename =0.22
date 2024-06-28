@@ -1,0 +1,5 @@
+Collecting pyelftools
+  Using cached pyelftools-0.31-py3-none-any.whl.metadata (381 bytes)
+Using cached pyelftools-0.31-py3-none-any.whl (180 kB)
+Installing collected packages: pyelftools
+Successfully installed pyelftools-0.31

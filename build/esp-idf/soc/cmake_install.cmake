@@ -1,4 +1,4 @@
-# Install script for directory: /home/majorbien/Pobrane/esp-idf4/src/esp-idf-v4.4.7/components/soc
+# Install script for directory: /opt/esp-idf/components/soc
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -34,12 +34,6 @@ endif()
 
 # Set default install directory permissions.
 if(NOT DEFINED CMAKE_OBJDUMP)
-  set(CMAKE_OBJDUMP "/home/majorbien/.espressif/tools/xtensa-esp32-elf/esp-2021r2-patch5-8.4.0/xtensa-esp32-elf/bin/xtensa-esp32-elf-objdump")
-endif()
-
-if(NOT CMAKE_INSTALL_LOCAL_ONLY)
-  # Include the install script for each subdirectory.
-  include("/home/majorbien/eclipse-workspace/extreme_design_custom/build/esp-idf/soc/esp32/cmake_install.cmake")
-
+  set(CMAKE_OBJDUMP "/home/majorbien/.espressif/tools/xtensa-esp-elf/esp-13.2.0_20230928/xtensa-esp-elf/bin/xtensa-esp32-elf-objdump")
 endif()
 

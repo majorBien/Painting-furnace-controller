@@ -443,12 +443,12 @@ esp_err_t mountSPIFFS(char * path, char * label, int max_files) {
 void app_main(void)
 {
 
-	 	gpio_pad_select_gpio(5);
-	    gpio_pad_select_gpio(17);
-	    gpio_pad_select_gpio(16);
-	    gpio_pad_select_gpio(4);
-	    gpio_pad_select_gpio(2);
-	    gpio_pad_select_gpio(15);
+	 	esp_rom_gpio_pad_select_gpio(5);
+	    esp_rom_gpio_pad_select_gpio(17);
+	    esp_rom_gpio_pad_select_gpio(16);
+	    esp_rom_gpio_pad_select_gpio(4);
+	    esp_rom_gpio_pad_select_gpio(2);
+	    esp_rom_gpio_pad_select_gpio(15);
 
 	    gpio_set_direction(5, GPIO_MODE_OUTPUT);
 	    gpio_set_direction(17, GPIO_MODE_OUTPUT);

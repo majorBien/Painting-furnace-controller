@@ -1,0 +1,6 @@
+Collecting ecdsa
+  Using cached ecdsa-0.19.0-py2.py3-none-any.whl.metadata (29 kB)
+Requirement already satisfied: six>=1.9.0 in /home/majorbien/venv/lib/python3.12/site-packages (from ecdsa) (1.16.0)
+Using cached ecdsa-0.19.0-py2.py3-none-any.whl (149 kB)
+Installing collected packages: ecdsa
+Successfully installed ecdsa-0.19.0
